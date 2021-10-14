@@ -40,9 +40,12 @@ INSTALLED_APPS = [
 
     # local apps
     'news.apps.NewsConfig',
+    'accounts.apps.AccountsConfig',
 
     # 3rd party apps
 ]
+
+# AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
