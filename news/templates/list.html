@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load timestamptag %}
+
+{% block title %}Latest News{% endblock title %}
+
+{% block content %}
+    <div>
+
+        <aside id="filter_items">
+            <div class="search">
+                <form action="{% url 'search_results' %}" method="get">
+                    <input type="text" name="search" placeholder="Search by text">
+                    <input type="submit" value="Search">
+                </form>
+            </div>
+
+            {% for label, type in news_types.items %}
+                {% if type not in news_heading %}
+                    <p class="filter_item">
+                        <a href="{% url label %}">{{ type }}</a>
+                    </p>
+                {% endif %}
+            {% endfor %}
+        </aside> 
+
+        <article id="main">
+            <h3>{{ news_heading }}</h3>
+
+            {% for new_item in page_obj %}
+            <div class="news-info">
+                <div class="user-date">
+                    <span>{{ new_item.by }}</span>
+                    <p style="font-style: oblique;">
+                        {{new_item.type }}
+                    </p>
+                        <small>{{ new_item.time | to_date }}</small>
+                </div>
+
+                <div class="title">
+                    {% if new_item.title %}
+                        <h4>{{ new_item.title }}</h4>
+                    {% endif %}
+                
+                    {% if new_item.text %}
+                        {% autoescape off %}
+                            <p>{{ new_item.text | truncatewords_html:20 }}</p>
+                        {% endautoescape %}
+                    {% endif %} 
+                    <a href="{{ new_item.get_absolute_url }}" class="more">Read More</a>  
+                </div>
+                <br style="clear:both;" />
+            </div>
+
+            {% empty %}
+                <div>Sorry, no {{ news_heading }} to display.</div>
+            {% endfor %}
+
+            <div id="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </div>
+        </article>  
+        
+    </div>
+{% endblock content %}

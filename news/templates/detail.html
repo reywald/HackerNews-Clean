@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load timestamptag %}
+
+{% block title %}Details{% endblock title %}
+
+{% block content %}
+<div class="news-info">
+    <div class="user-date">
+        <span>{{ object.by }}</span>
+        <p style="font-style: oblique; font-weight: bold">
+            {{ object.type | title }} Details
+        </p>
+        <small>{{ object.time | to_date }}</small>
+    </div>
+
+    <div class="title">
+        {% if object.title %}
+            <h4>{{ object.title }}</h4>
+        {% endif %}
+    </div>
+    <br style="clear:both;" />
+    <div class="details">
+        {% if object.text %}
+            {% autoescape off %}
+            <p>
+                {{ object.text }}
+            </p>
+            {% endautoescape %}
+        {% endif %}
+    </div>
+        
+    <p><a href="{{ request.META.HTTP_REFERER|escape }}">Back</a></p>
+</div>
+{% endblock content %}

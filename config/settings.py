@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
     # 3rd party apps
     'debug_toolbar',
+    'background_task',
 ]
 
 # AUTH_USER_MODEL = 'accounts.User'
