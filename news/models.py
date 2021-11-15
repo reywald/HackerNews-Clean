@@ -41,6 +41,7 @@ class Base(models.Model):
     time = models.PositiveIntegerField(null=True, blank=True)
     dead = models.BooleanField(default=False)
     kids = models.TextField(blank=True, null=True)
+    text = models.CharField(max_length=5000, blank=True)
 
     class Meta:
         abstract = True
@@ -58,7 +59,6 @@ class Comment(Base):
     parent = GenericForeignKey('content_type', 'object_id')
 
     comments = GenericRelation('Comment')
-    text = models.CharField(max_length=500, blank=True)
 
     def __str__(self) -> str:
         return self.text        # Truncate to 20 words
@@ -71,7 +71,6 @@ class Job(Base):
     """ Encapsulates a job news item. """
 
     score = models.PositiveIntegerField(null=True, blank=True)
-    text = models.TextField(max_length=500, blank=True)
     url = models.URLField(blank=True)
     title = models.CharField(max_length=100, blank=True)
 
@@ -89,7 +88,6 @@ class Poll(Base):
     parts = models.TextField(null=True)
     score = models.PositiveIntegerField(null=True, blank=True)
     title = models.CharField(max_length=100, blank=True)
-    text = models.CharField(max_length=500, blank=True)
 
     def __str__(self) -> str:
         return self.title
@@ -104,7 +102,6 @@ class PollOption(Base):
     parent = models.ForeignKey(Poll, on_delete=models.CASCADE,
                                limit_choices_to=Q(type='Poll'))
     score = models.PositiveIntegerField(null=True, blank=True)
-    text = models.CharField(max_length=500, blank=True)
 
     def __str__(self) -> str:
         return self.text
@@ -120,7 +117,6 @@ class Story(Base):
     descendants = models.PositiveSmallIntegerField(null=True, blank=True)
     score = models.PositiveIntegerField(null=True, blank=True)
     title = models.CharField(max_length=100, blank=True)
-    text = models.CharField(max_length=500, blank=True)
     url = models.URLField(blank=True)
 
     def __str__(self) -> str:
