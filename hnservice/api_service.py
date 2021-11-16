@@ -3,6 +3,8 @@ import aiohttp
 import asyncio
 
 import logging
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s: %(message)s",
+                    filename="hackernews_logs.txt", filemode="a")
 
 baseUrl = "https://hacker-news.firebaseio.com/v0"
 
@@ -21,9 +23,9 @@ async def get_latest_story() -> Tuple:
         response = await query_endpoint(session, url)
 
         if response:
-            item = get_item_details(response.json())
+            item = get_item_details(response)
 
-    return item if item else None
+    return item
 
 
 async def get_all_latest_stories() -> Tuple:
@@ -36,6 +38,7 @@ async def get_all_latest_stories() -> Tuple:
     ids_list : Tuple
         The result containing a list of ids representing the show stories    
     """
+    logging.info("*" * 30 + "Get all latest stories" + "*" * 30)
     urls = (f"{baseUrl}/topstories.json",       # Get the top stories.
             # Get the latest Ask HN Stories.
             f"{baseUrl}/askstories.json",
@@ -46,7 +49,7 @@ async def get_all_latest_stories() -> Tuple:
     tasks = []
 
     async with aiohttp.ClientSession() as session:
-        for url in urls:
+        async for url in urls:
             tasks.extend(asyncio.ensure_future(query_endpoint(session, url)))
 
         # Proceed to get every single news item
@@ -54,7 +57,7 @@ async def get_all_latest_stories() -> Tuple:
 
         all_news_items = await get_items_by_id(session, id_list)
 
-    return all_news_items if all_news_items else None
+    return all_news_items
 
 
 async def get_items_by_id(session: aiohttp.ClientSession, item_ids: list) -> Tuple:
@@ -78,6 +81,7 @@ async def get_items_by_id(session: aiohttp.ClientSession, item_ids: list) -> Tup
 
     tasks = []
 
+    logging.info("*" * 30 + "Get items by id" + "*" * 30)
     for id in item_ids:
         url = f"{baseUrl}/item/{id}.json"
         tasks.append(asyncio.ensure_future(
@@ -85,7 +89,7 @@ async def get_items_by_id(session: aiohttp.ClientSession, item_ids: list) -> Tup
 
     news_items = await asyncio.gather(*tasks)
 
-    return news_items if news_items else None
+    return news_items
 
 
 async def get_item_details(session: aiohttp.ClientSession, item):
@@ -99,7 +103,7 @@ async def get_item_details(session: aiohttp.ClientSession, item):
     url = f"{baseUrl}/item/{item}.json"
 
     response = await query_endpoint(session, url)
-    return response if response else None
+    return response
 
 
 async def query_endpoint(session: aiohttp.ClientSession, url: str):
@@ -120,11 +124,14 @@ async def query_endpoint(session: aiohttp.ClientSession, url: str):
     """
 
     async with session.get(url) as response:
-        news_item = await response.json()
+        if response.ok:
+            logging.info(f"{url} - {response.status}")
+            return await response.json()
+        else:
+            logging.error(f"{response.status} - {response.message}")
+            return None
 
-    return news_item if news_item else None
 
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    result = loop.run_until_complete(get_all_latest_stories())
+# if __name__ == '__main__':
+#     loop = asyncio.get_event_loop()
+#     result = loop.run_until_complete(get_all_latest_stories())
