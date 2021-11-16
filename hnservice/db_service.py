@@ -1,6 +1,9 @@
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, IntegrityError, DatabaseError
 from news.models import Comment, Job, Poll, PollOption, Story
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s: %(message)s")
 
 
 class DBchecker():
@@ -29,6 +32,8 @@ class DBchecker():
         db_states['poll'] = Poll.objects.all().first is not None
         db_states['polloption'] = PollOption.objects.all().first is not None
         db_states['story'] = Story.objects.all().first() is not None
+
+        logging.info("Checking the tables for any data")
 
         return db_states
 
@@ -101,11 +106,13 @@ class DBWriter():
 
         try:
             dataset.get_or_create(**news_item)
+
         except IntegrityError:
-            print(
+            logging.exception(
                 f"Could not create entry {news_item.id}. Entry already exists")
+
         except DatabaseError as db_error:
-            print(f"Other error:\n\t{db_error}")
+            logging.exception(f"Other error:\n\t{db_error}")
 
     def __has_same_structure(self, item_model: models.Model, item_dict: dict):
         """ Check if the dictionary objects keys are also in the 
@@ -121,7 +128,7 @@ class DBWriter():
             try:
                 item_model._meta.get_field(key)
             except FieldDoesNotExist:
-                print(
+                logging.exception(
                     f"{item_dict['id']}'s {key} is not a field in {item_model._meta.label}")
                 return False
 

@@ -7,8 +7,10 @@ from background_task import background, tasks
 from background_task.models import Task
 from datetime import datetime, timedelta
 import pytz
+import functools
 
-from .db_services import DBchecker, DBWriter
+from .db_service import DBchecker, DBWriter
+from .api_service import get_latest_stories, get_latest_story
 
 
 baseUrl = "https://hacker-news.firebaseio.com/v0"
@@ -23,48 +25,20 @@ def get_latest_news():
     """
 
     # Get most recent news if tables are populated
-    if checker.check_dbs():
-        url = f"{baseUrl}/maxitem.json"
+    # Check if db tables are populated
+    db_states = checker.check_dbs()
+    is_tables_populated = functools.reduce(
+        lambda prop1, prop2: db_states[prop1] or db_states[prop2])
+    if is_tables_populated:
+        response = get_latest_story()
 
-        response = connect(url)
-
-        if response:
-            item = get_item_details(response.json())
-            writer.write_item_to_db(item)
+        # if response:
+        #     writer.write_item_to_db(response)
 
     # Otherwise, get and process latest 100 records
-    else:
+    else:        
+        latest_stories = get_latest_stories()
 
-        # get the list of news items
-        urls = f"{baseUrl}/topstories.json", f"{baseUrl}/askstories.json", \
-                f"{baseUrl}/showstories.json", f"{baseUrl}/jobstories.json", \
-                f"{baseUrl}/updates.json"
-
-        for url in urls:
-            response = connect(url)
-
-            if response:
-                news_items = response.json()
-
-                selected_news_items = news_items[:100]
-                for item in selected_news_items:
-                    item_details = get_item_details(item)
-                    if item_details:
-                        writer.write_item_to_db(item_details)
-
-
-def get_item_details(item):
-    """ Get the details of the item from HackNews' server
-
-    Returns
-    -------
-    Object
-        The json-parsed response data
-    """
-
-    url = f"{baseUrl}/item/{item}.json"
-    response = connect(url)
-    return response.json() if response else None
 
 
 def connect(url):
