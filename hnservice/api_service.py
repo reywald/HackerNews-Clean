@@ -2,9 +2,9 @@ from typing import Tuple
 import aiohttp
 import asyncio
 
+# Initialize logging
 import logging
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s: %(message)s",
-                    filename="hackernews_logs.txt", filemode="a")
+file_logger = logging.getLogger(__name__)
 
 baseUrl = "https://hacker-news.firebaseio.com/v0"
 
@@ -23,7 +23,7 @@ async def get_latest_story() -> Tuple:
         response = await query_endpoint(session, url)
 
         if response:
-            item = get_item_details(response)
+            item = await get_item_details(session, response)
 
     return item
 
@@ -38,7 +38,7 @@ async def get_all_latest_stories() -> Tuple:
     ids_list : Tuple
         The result containing a list of ids representing the show stories    
     """
-    logging.info("*" * 30 + "Get all latest stories" + "*" * 30)
+    file_logger.info("*" * 30 + "Get all latest stories" + "*" * 30)
     urls = (f"{baseUrl}/topstories.json",       # Get the top stories.
             # Get the latest Ask HN Stories.
             f"{baseUrl}/askstories.json",
@@ -81,7 +81,7 @@ async def get_items_by_id(session: aiohttp.ClientSession, item_ids: list) -> Tup
 
     tasks = []
 
-    logging.info("*" * 30 + "Get items by id" + "*" * 30)
+    file_logger.info("*" * 30 + "Get items by id" + "*" * 30)
     for id in item_ids:
         url = f"{baseUrl}/item/{id}.json"
         tasks.append(asyncio.ensure_future(
@@ -125,10 +125,10 @@ async def query_endpoint(session: aiohttp.ClientSession, url: str):
 
     async with session.get(url) as response:
         if response.ok:
-            logging.info(f"{url} - {response.status}")
+            file_logger.info(f"{url} - {response.status}")
             return await response.json()
         else:
-            logging.error(f"{response.status} - {response.message}")
+            file_logger.error(f"{response.status} - {response.message}")
             return None
 
 

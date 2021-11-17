@@ -19,11 +19,13 @@ from django.urls import path, include
 
 import hnservice.tasks
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('news.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
 ]
+
 
 # Start task to download news items
 hnservice.tasks.start_task()

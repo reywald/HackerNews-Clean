@@ -10,6 +10,10 @@ from datetime import datetime, timedelta
 import pytz
 import functools
 
+# Initialize logging
+import logging
+file_logger = logging.getLogger(__name__)
+
 from .db_service import DBchecker, DBWriter
 from .api_service import get_all_latest_stories, get_latest_story
 
@@ -32,6 +36,7 @@ def get_latest_news():
         lambda prop1, prop2: prop1 or prop2, db_states.values())
     if is_tables_populated:
         response = asyncio.run(get_latest_story())
+        file_logger.info(response)
 
         # if response:
         #     writer.write_item_to_db(response)
@@ -56,3 +61,4 @@ def start_task():
         # No task running with this name, call background tasks every 5 minutes
         get_latest_news(schedule=timedelta(seconds=60), repeat=300,
                                 repeat_until=stop, verbose_name="Get Latest News")
+        file_logger.debug("Scheduling the background task")
