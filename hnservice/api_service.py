@@ -49,8 +49,8 @@ async def get_all_latest_stories() -> Tuple:
     tasks = []
 
     async with aiohttp.ClientSession() as session:
-        async for url in urls:
-            tasks.extend(asyncio.ensure_future(query_endpoint(session, url)))
+        for url in urls:
+            tasks.append(asyncio.ensure_future(query_endpoint(session, url)))
 
         # Proceed to get every single news item
         id_list = await asyncio.gather(*tasks)
@@ -60,7 +60,7 @@ async def get_all_latest_stories() -> Tuple:
     return all_news_items
 
 
-async def get_items_by_id(session: aiohttp.ClientSession, item_ids: list) -> Tuple:
+async def get_items_by_id(session: aiohttp.ClientSession, news_sources: list):
     """ Get the item using its unique id, an integer value.
     The item can be a Story, Comment, Job, Ask HNs or Poll. The function creates
     Futures from the list and gathers their results after asynchronous execution.
@@ -70,8 +70,8 @@ async def get_items_by_id(session: aiohttp.ClientSession, item_ids: list) -> Tup
     session : aiohttp.ClientSession
         The client session object to use http requests
 
-    item_ids : Tuple
-        The list of ids used to fetch the news item
+    news_sources : Tuple
+        The list of lists of ids of news items to fetch.
 
     Returns
     -------
@@ -79,15 +79,18 @@ async def get_items_by_id(session: aiohttp.ClientSession, item_ids: list) -> Tup
         The responses from the server after executing the created futures.
     """
 
-    tasks = []
+    tasks = [[]] * len(news_sources)
+    news_items = [[]] * len(news_sources)
 
     file_logger.info("*" * 30 + "Get items by id" + "*" * 30)
-    for id in item_ids:
-        url = f"{baseUrl}/item/{id}.json"
-        tasks.append(asyncio.ensure_future(
-            query_endpoint(session=session, url=url)))
 
-    news_items = await asyncio.gather(*tasks)
+    for idx, news_source in enumerate(news_sources):
+        for item_id in news_source:
+            url = f"{baseUrl}/item/{item_id}.json"
+            tasks[idx].append(asyncio.ensure_future(
+                query_endpoint(session=session, url=url)))
+
+        news_items[idx] = await asyncio.gather(*tasks[idx])
 
     return news_items
 
@@ -128,7 +131,7 @@ async def query_endpoint(session: aiohttp.ClientSession, url: str):
             file_logger.info(f"{url} - {response.status}")
             return await response.json()
         else:
-            file_logger.error(f"{response.status} - {response.message}")
+            file_logger.error(f"{url} - {response.status}")
             return None
 
 

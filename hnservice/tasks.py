@@ -8,7 +8,6 @@ from background_task import background, tasks
 from background_task.models import Task
 from datetime import datetime, timedelta
 import pytz
-import functools
 
 # Initialize logging
 import logging
@@ -31,10 +30,7 @@ def get_latest_news():
 
     # Get most recent news if tables are populated
     # Check if db tables are populated
-    db_states = checker.check_dbs()
-    is_tables_populated = functools.reduce(
-        lambda prop1, prop2: prop1 or prop2, db_states.values())
-    if is_tables_populated:
+    if checker.is_tables_populated():
         response = asyncio.run(get_latest_story())
         file_logger.info(response)
 
@@ -51,6 +47,8 @@ def start_task():
     Make sure to run only one scheduled function
     """
 
+    TASK_DURATION = 300
+
     tasks = Task.objects.filter(verbose_name="Get Latest News")
     if len(tasks) == 0:
 
@@ -59,6 +57,6 @@ def start_task():
             timedelta(hours=1, minutes=0, seconds=0)
 
         # No task running with this name, call background tasks every 5 minutes
-        get_latest_news(schedule=timedelta(seconds=60), repeat=300,
+        get_latest_news(schedule=timedelta(seconds=60), repeat=TASK_DURATION,
                                 repeat_until=stop, verbose_name="Get Latest News")
-        file_logger.debug("Scheduling the background task")
+        file_logger.debug(f"Scheduling the background task for every {TASK_DURATION/60} minutes")

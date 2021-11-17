@@ -2,6 +2,8 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db import models, IntegrityError, DatabaseError
 from news.models import Comment, Job, Poll, PollOption, Story
 
+import functools
+
 # Initialize logging
 import logging
 file_logger = logging.getLogger(__name__)
@@ -13,11 +15,11 @@ class DBchecker():
 
     Methods
     -------
-    check_dbs()
+    is_tables_populated()
         Checks each model (Story, Job, Poll, Comment) for any recoreds.
     """
 
-    def check_dbs(self):
+    def is_tables_populated(self):
         """ Check if data is in tables by fetching first rows 
 
         Returns
@@ -30,13 +32,14 @@ class DBchecker():
 
         db_states['comment'] = Comment.objects.all().first() is not None
         db_states['job'] = Job.objects.all().first() is not None
-        db_states['poll'] = Poll.objects.all().first is not None
-        db_states['polloption'] = PollOption.objects.all().first is not None
+        db_states['poll'] = Poll.objects.all().first() is not None
+        db_states['polloption'] = PollOption.objects.all().first() is not None
         db_states['story'] = Story.objects.all().first() is not None
 
-        file_logger.info("Checking the tables for any data")
-
-        return db_states
+        file_logger.info(f"Checking the tables for any data: {db_states}")
+        
+        return functools.reduce(
+            lambda prop1, prop2: prop1 or prop2, db_states.values())
 
 
 class DBWriter():
